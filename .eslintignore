@@ -1,9 +1,11 @@
-lib
-build
-dist
-.yarn
 .husky
-generated
 bundle.c?js
 .pnp*
+**/lib
+**/build
+**/dist
+**/out
 **/generated
+**/node_modules
+**/.next
+**/.turbo

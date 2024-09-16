@@ -1,6 +1,0 @@
-{
-  "extends": "@fern-platform/configs/tsconfig/cli.json",
-  "compilerOptions": { "outDir": "./dist", "rootDir": "./src" },
-  "include": ["./src/**/*"],
-  "exclude": ["cdk.out"]
-}

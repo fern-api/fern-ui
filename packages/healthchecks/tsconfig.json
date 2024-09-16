@@ -1,14 +1,14 @@
 {
-  "extends": "../../shared/tsconfig.shared.json",
+  "extends": "@fern-platform/tsconfig/cli.json",
   "compilerOptions": {
-    "composite": true,
-    "outDir": "dist",
-    "rootDir": "."
+    "rootDir": "src",
+    "outDir": "dist"
   },
-  "include": ["./src/**/*"],
+  "include": ["src"],
+  "exclude": ["node_modules"],
   "references": [
     {
-      "path": "../commons/core-utils"
+      "path": "../core-utils"
     },
     {
       "path": "../fdr-sdk"

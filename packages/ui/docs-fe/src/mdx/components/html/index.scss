@@ -1,0 +1,8 @@
+@layer base {
+    code:not(.code-block) {
+        @apply ring-default bg-card rounded px-1 py-0.5 font-mono ring-1 ring-inset;
+        @apply text-[0.875em];
+
+        font-weight: inherit;
+    }
+}

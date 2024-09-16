@@ -1,4 +1,4 @@
-import { useResizeObserver } from "@fern-ui/react-commons";
+import { useResizeObserver } from "@fern-ui/react-utils";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import cn, { clsx } from "clsx";
 import { Check, InfoCircle } from "iconoir-react";
@@ -104,7 +104,7 @@ export const FernDropdown = forwardRef<HTMLButtonElement, PropsWithChildren<Fern
                                         container={container}
                                     />
                                 ) : (
-                                    <DropdownMenu.Separator key={idx} className="mx-2 my-1 h-px bg-border-default" />
+                                    <DropdownMenu.Separator key={idx} className="bg-border-default mx-2 my-1 h-px" />
                                 ),
                             )}
                         </DropdownMenu.RadioGroup>
@@ -180,7 +180,7 @@ function FernDropdownItemValue({
                 </div>
 
                 {option.helperText != null && (
-                    <div className="mt-0.5 ml-5 text-xs opacity-60 text-start leading-snug" ref={helperTextRef}>
+                    <div className="ml-5 mt-0.5 text-start text-xs leading-snug opacity-60" ref={helperTextRef}>
                         {option.helperText}
                     </div>
                 )}
@@ -212,14 +212,14 @@ function FernDropdownItemValue({
                         {
                             ref: option.value === value ? activeRef : undefined,
                             href: option.href,
-                            className: cn("fern-dropdown-item", option.className),
+                            className: clsx("fern-dropdown-item", option.className),
                         },
                         renderButtonContent(),
                     )
                 ) : (
                     <button
                         ref={option.value === value ? activeRef : undefined}
-                        className={cn("fern-dropdown-item", option.className)}
+                        className={clsx("fern-dropdown-item", option.className)}
                     >
                         {renderButtonContent()}
                     </button>
