@@ -19,6 +19,7 @@ import {
     serializeMdx,
     setMdxBundler,
 } from "@fern-ui/ui";
+import { capturePosthogEvent } from "@fern-ui/ui/analytics";
 import { FernUser, getAPIKeyInjectionConfigNode, getAuthEdgeConfig, verifyFernJWTConfig } from "@fern-ui/ui/auth";
 import { getMdxBundler } from "@fern-ui/ui/bundlers";
 import type { GetServerSidePropsResult, GetStaticPropsResult, Redirect } from "next";
@@ -220,6 +221,10 @@ async function convertDocsToDocsPageProps({
         // this is better than following redirects, since it will signal a proper 404 status code.
         // however, we should consider rendering a custom 404 page in the future using the customer's branding.
         // see: https://nextjs.org/docs/app/api-reference/file-conventions/not-found
+
+        capturePosthogEvent("not_found", {
+            slug,
+        });
 
         // eslint-disable-next-line no-console
         console.error(`Failed to resolve navigation for ${url}`);
