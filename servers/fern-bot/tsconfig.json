@@ -31,7 +31,10 @@
     "src/__test__/**/*"
   ],
   "ts-node": {
-    "require": ["tsconfig-paths/register"]
+    "require": ["tsconfig-paths/register"],
+    "compilerOptions": {
+      "module": "commonjs"
+    }
   },
   "references": [
     {

@@ -22,6 +22,8 @@ provider:
     GITHUB_APP_CLIENT_ID: ${env:GITHUB_APP_CLIENT_ID, 'placeholder'}
     GITHUB_APP_CLIENT_SECRET: ${env:GITHUB_APP_CLIENT_SECRET, 'placeholder'}
     GITHUB_APP_WEBHOOK_SECRET: ${env:GITHUB_APP_WEBHOOK_SECRET, 'placeholder'}
+    # This is the Lambda URL, locally you can use the URL from smee: https://smee.io/3DXoSvCO2NH87w8e
+    GITHUB_APP_WEBHOOK_PROXY_URL: ${env:GITHUB_APP_WEBHOOK_PROXY_URL, 'placeholder'}
     CO_API_KEY: ${env:CO_API_KEY, 'placeholder'}
     DEFAULT_VENUS_ORIGIN: ${env:DEFAULT_VENUS_ORIGIN, 'placeholder'}
     DEFAULT_FDR_ORIGIN: ${env:DEFAULT_FDR_ORIGIN, 'placeholder'}
@@ -30,6 +32,10 @@ provider:
     CUSTOMER_PULLS_SLACK_CHANNEL: ${env:CUSTOMER_PULLS_SLACK_CHANNEL, 'placeholder'}
     REPO_TO_RUN_ON: ${env:REPO_TO_RUN_ON, 'OMIT'}
     FERN_TOKEN: ${env:FERN_TOKEN, 'OMIT'}
+    # For Probot explicitly (it picks these up by default)
+    APP_ID: ${env:GITHUB_APP_ID, 'placeholder'}
+    WEBHOOK_SECRET: ${env:GITHUB_APP_WEBHOOK_SECRET, 'placeholder'}
+    WEBHOOK_PROXY_URL: ${env:GITHUB_APP_WEBHOOK_PROXY_URL, 'placeholder'}
 
   # Roles for the lambda functions
   iam:
@@ -45,6 +51,13 @@ provider:
             - s3:PutObject
             - s3:DeleteObject
           Resource: arn:aws:s3:::fern-bot-${opt:stage}/*
+
+  # Images that will be built locally and uploaded to ECR
+  ecr:
+    images:
+      generator_languages_image:
+        platform: linux/amd64
+        path: ./
 
 functions:
   # ========== Updater Step Function ============
@@ -135,10 +148,27 @@ functions:
     memorySize: 5120
     ephemeralStorageSize: 10240
     handler: "src/functions/grpc-proxy/proxyGrpc.handler"
-    layers:
-      - arn:aws:lambda:us-east-1:553035198032:layer:git-lambda2:8
     events:
       - httpApi: "POST /grpc"
+
+  # =============================================
+
+  # A webhook listener for GitHub events, also an endpoint (not scheduled).
+  githubWebhookListener:
+    timeout: 30
+    memorySize: 5120
+    ephemeralStorageSize: 10240
+    url: true
+    image:
+      name: generator_languages_image
+      command:
+        - "githubWebhookListener.handler"
+      entryPoint:
+        - "/lambda-entrypoint.sh"
+    events:
+      - httpApi:
+          path: /api/github/webhooks
+          method: post
 
 stepFunctions:
   stateMachines:

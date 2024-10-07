@@ -1,16 +1,17 @@
 import execa from "execa";
 import tmp from "tmp-promise";
 import { doesPathExist } from "./fs";
-
+import { FernVenusApi, FernVenusApiClient } from "@fern-api/venus-api-sdk";
 import { readFile } from "fs/promises";
 import yaml from "js-yaml";
+import { join } from "path";
 
 export async function execFernCli(
     command: string,
     cwd?: string,
     pipeYes: boolean = false,
 ): Promise<execa.ExecaChildProcess<string>> {
-    console.log(`Running command on fern CLI: ${command}`);
+    console.log(`[Fern CLI] Running command on fern CLI: ${command}`);
     const commandParts = command.split(" ");
     try {
         // Running the commands on Lambdas is a bit odd...specifically you can only write to tmp on a lambda
@@ -42,7 +43,7 @@ export async function execFernCli(
         }
         return command;
     } catch (error) {
-        console.error("fern command failed.");
+        console.error("[Fern CLI] fern command failed.");
         throw error;
     }
 }
@@ -58,12 +59,74 @@ export function cleanFernStdout(stdout: string): string {
 // defined in the OSS repo.
 type GeneratorList = Record<string, Record<string, string[]>>;
 export const NO_API_FALLBACK_KEY = "NO_API_FALLBACK";
-export async function getGenerators(fullRepoPath: string): Promise<GeneratorList> {
+export async function getGenerators(fullRepoPath: string, additionalConfig?: string): Promise<GeneratorList> {
     const tmpDir = await tmp.dir();
     const outputPath = `${tmpDir.path}/gen_list.yml`;
-    await execFernCli(`generator list --api-fallback ${NO_API_FALLBACK_KEY} -o ${outputPath}`, fullRepoPath);
+    let command = `generator list --api-fallback ${NO_API_FALLBACK_KEY} -o ${outputPath} `;
+    if (additionalConfig != null) {
+        command += additionalConfig;
+    }
+    await execFernCli(command, fullRepoPath);
 
     const data = await readFile(outputPath, "utf-8");
 
     return yaml.load(data) as GeneratorList;
+}
+
+export function getQualifiedGeneratorName({
+    generatorName,
+    groupName,
+    apiName,
+}: {
+    generatorName: string;
+    groupName: string;
+    apiName: string | undefined;
+}): string {
+    let additionalName = groupName;
+    if (apiName != null && apiName !== NO_API_FALLBACK_KEY) {
+        additionalName = `${apiName}/${groupName}`;
+    }
+    return `${generatorName.replace("fernapi/", "")}@${additionalName}`;
+}
+
+export async function getOrganzation(fullRepoPath: string): Promise<string | undefined> {
+    try {
+        return cleanFernStdout((await execFernCli("organization", fullRepoPath)).stdout);
+    } catch (error) {
+        console.error(
+            "Could not determine the repo owner, continuing to upgrade CLI, but will fail generator upgrades.",
+        );
+        return;
+    }
+}
+
+export async function isOrganizationCanary(orgId: string, venusUrl: string): Promise<boolean> {
+    const client = new FernVenusApiClient({ environment: venusUrl });
+
+    const response = await client.organization.get(FernVenusApi.OrganizationId(orgId));
+    console.log(`Organization response: ${JSON.stringify(response)}, orgId: ${orgId}.`);
+    if (!response.ok) {
+        throw new Error(`Organization ${orgId} not found`);
+    }
+
+    return response.body.isFernbotCanary;
+}
+
+export async function getPreviewPath({
+    generatorDockerImage,
+    currentRepoPath,
+    apiName,
+}: {
+    generatorDockerImage: string;
+    currentRepoPath: string;
+    apiName: string | undefined;
+}): Promise<string> {
+    // Push the preview to a new branch
+    // HACK HACK: we should likely add a command to the CLI that spits out the preview path, since it's the one
+    // downloading the preview repo to disk
+    let relativePathToPreview = `./.preview/${generatorDockerImage.replace("fernapi/", "")}`;
+    if (apiName != null) {
+        relativePathToPreview = join(`./apis/${apiName}`, relativePathToPreview);
+    }
+    return join(currentRepoPath, "fern", relativePathToPreview);
 }

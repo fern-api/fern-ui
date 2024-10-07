@@ -19,6 +19,7 @@ env:
   GITHUB_APP_CLIENT_ID: ${{ secrets.FERN_BOT_DEV_GITHUB_APP_CLIENT_ID }}
   GITHUB_APP_CLIENT_SECRET: ${{ secrets.FERN_BOT_DEV_GITHUB_APP_CLIENT_SECRET }}
   GITHUB_APP_WEBHOOK_SECRET: ${{ secrets.FERN_BOT_DEV_GITHUB_APP_WEBHOOK_SECRET }}
+  GITHUB_APP_WEBHOOK_PROXY_URL: ${{ secrets.FERN_BOT_DEV_GITHUB_APP_WEBHOOK_PROXY_URL }}
   DEFAULT_VENUS_ORIGIN: "https://venus-dev2.buildwithfern.com"
   DEFAULT_FDR_ORIGIN: "https://registry-dev2.buildwithfern.com"
   FERNIE_SLACK_APP_TOKEN: ${{ secrets.FERNIE_SLACK_APP_TOKEN }}
@@ -40,7 +41,9 @@ jobs:
           npm install -g fern-api
 
       - name: Compile and build
-        run: pnpm turbo compile codegen build
+        run: |
+          pnpm turbo compile codegen build
+          pnpm --filter=@fern-platform/fern-bot compile:github-webhook
         env:
           FERN_TOKEN: ${{ secrets.FERN_TOKEN }}
           WORKOS_API_KEY: ${{ secrets.WORKOS_API_KEY }}
