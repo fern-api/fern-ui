@@ -13,21 +13,23 @@ function readFixture(fixture: string) {
 }
 
 describe("humanloop", () => {
-    it("should work", () => {
+    it("should work", async () => {
         const fixture = readFixture("humanloop");
         const root = FernNavigation.utils.toRootNode(fixture);
 
         const apis = Object.fromEntries(
-            Object.values(fixture.definition.apis).map((api) => {
-                return [
-                    api.id,
-                    ApiDefinition.ApiDefinitionV1ToLatest.from(api, {
-                        useJavaScriptAsTypeScript: false,
-                        alwaysEnableJavaScriptFetch: false,
-                        usesApplicationJsonInFormDataValue: false,
-                    }).migrate(),
-                ];
-            }),
+            await Promise.all(
+                Object.values(fixture.definition.apis).map(async (api) => {
+                    return [
+                        api.id,
+                        await ApiDefinition.ApiDefinitionV1ToLatest.from(api, {
+                            useJavaScriptAsTypeScript: false,
+                            alwaysEnableJavaScriptFetch: false,
+                            usesApplicationJsonInFormDataValue: false,
+                        }).migrate(),
+                    ];
+                }),
+            ),
         );
 
         const pages = mapValues(fixture.definition.pages, (page) => page.markdown);

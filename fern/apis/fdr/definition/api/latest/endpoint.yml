@@ -28,7 +28,7 @@ types:
       defaultEnvironment: optional<rootCommons.EnvironmentId>
       environments: optional<list<commons.Environment>>
       pathParameters: optional<list<type.ObjectProperty>>
-      queryParameters: optional<list<type.ObjectProperty>>
+      queryParameters: optional<list<QueryParameter>>
       requestHeaders: optional<list<type.ObjectProperty>>
       responseHeaders: optional<list<type.ObjectProperty>> # this is not being used currently
       request: optional<HttpRequest>
@@ -36,6 +36,16 @@ types:
       errors: optional<list<ErrorResponse>>
       examples: optional<list<ExampleEndpointCall>>
       snippetTemplates: optional<EndpointSnippetTemplates>
+
+  QueryParameter:
+    extends: type.ObjectProperty
+    properties:
+      arrayEncoding: optional<QueryParameterArrayEncoding>
+
+  QueryParameterArrayEncoding:
+    enum:
+      - comma
+      - exploded
 
   EndpointSnippetTemplates:
     properties:

@@ -31,6 +31,7 @@ export interface ApiDefinitionVisitor {
     TypeShape(shape: Latest.TypeShape, key: string): Latest.TypeShape;
     ObjectType(property: Latest.ObjectType, key: string): Latest.ObjectType;
     ObjectProperty(property: Latest.ObjectProperty, key: string): Latest.ObjectProperty;
+    QueryParameter(property: Latest.QueryParameter, key: string): Latest.QueryParameter;
     EnumValue(value: Latest.EnumValue, key: string): Latest.EnumValue;
     UndiscriminatedUnionVariant(
         variant: Latest.UndiscriminatedUnionVariant,
@@ -62,6 +63,7 @@ export class Transformer {
             TypeShape: visitor.TypeShape ?? identity,
             ObjectType: visitor.ObjectType ?? identity,
             ObjectProperty: visitor.ObjectProperty ?? identity,
+            QueryParameter: visitor.QueryParameter ?? identity,
             EnumValue: visitor.EnumValue ?? identity,
             UndiscriminatedUnionVariant: visitor.UndiscriminatedUnionVariant ?? identity,
             DiscriminatedUnionVariant: visitor.DiscriminatedUnionVariant ?? identity,
@@ -203,6 +205,7 @@ export class Transformer {
             ErrorExample: visitor.ErrorExample,
             ExampleWebSocketSession: visitor.ExampleWebSocketSession,
             ObjectProperty: visitor.ObjectProperty,
+            QueryParameter: visitor.QueryParameter,
             EnumValue: visitor.EnumValue,
             UndiscriminatedUnionVariant: visitor.UndiscriminatedUnionVariant,
             FormDataFile: visitor.FormDataFile,
@@ -240,7 +243,7 @@ export class Transformer {
             ) ?? [];
         const queryParameters =
             endpoint.queryParameters?.map((param) =>
-                this.visitor.ObjectProperty(param, `${parentKey}/query/${param.key}`),
+                this.visitor.QueryParameter(param, `${parentKey}/query/${param.key}`),
             ) ?? [];
         const requestHeaders =
             endpoint.requestHeaders?.map((param) =>
