@@ -12,6 +12,7 @@ import "../css/globals.scss";
 import { NextNProgress } from "../header/NProgress";
 import { useInterceptNextDataHref } from "../hooks/useInterceptNextDataHref";
 import { ThemeScript } from "../themes/ThemeScript";
+import { CustomerAnalytics } from "./CustomerAnalytics";
 
 export function NextApp({ Component, pageProps, router }: AppProps<DocsProps | undefined>): ReactElement {
     // This is a hack to handle edge-cases related to multitenant subpath rendering:
@@ -24,6 +25,7 @@ export function NextApp({ Component, pageProps, router }: AppProps<DocsProps | u
     return (
         <JotaiProvider store={store}>
             <HydrateAtoms pageProps={pageProps}>
+                <CustomerAnalytics />
                 <ThemeScript colors={pageProps?.colors} />
                 <NextNProgress options={{ showSpinner: false, speed: 400 }} showOnShallow={false} />
                 <Toaster />
