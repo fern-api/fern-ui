@@ -1,0 +1,24 @@
+@layer components {
+  .fern-tree {
+    details {
+      summary {
+        list-style: none;
+      }
+      summary::marker,
+      summary::-webkit-details-marker {
+        display: none;
+      }
+    }
+
+    [data-branch] {
+      &.last > [data-line] {
+        display: none;
+      }
+
+      + * {
+        position: relative;
+        z-index: 10;
+      }
+    }
+  }
+}

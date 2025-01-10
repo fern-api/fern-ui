@@ -11,24 +11,14 @@ Object.defineProperty(navigator, "clipboard", {
 });
 
 import { cleanup, fireEvent, render } from "@testing-library/react";
-import renderer from "react-test-renderer";
 import { CopyToClipboardButton } from "../CopyToClipboardButton";
 
 afterEach(cleanup);
 
 describe("CopyToClipboardButton", () => {
-  it("renders correctly", async () => {
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
-    const component = renderer.create(
-      <CopyToClipboardButton testId="copy-btn" content={"test"} />
-    );
-    const tree = component.toJSON() as renderer.ReactTestRendererJSON;
-    expect(tree).toMatchSnapshot();
-  });
-
   it("changes content after click", () => {
     const { getByTestId } = render(
-      <CopyToClipboardButton content="abc" testId="copy-btn" />
+      <CopyToClipboardButton data-testid="copy-btn" content="abc" />
     );
 
     const innerHtmlBeforeClick = getByTestId("copy-btn").innerHTML;

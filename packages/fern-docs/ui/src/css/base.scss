@@ -5,6 +5,7 @@
       --typography-body-font-family,
       var(--body-font-fallback)
     ) !important;
+    scroll-padding-top: var(--spacing-header-height);
   }
 
   code,
