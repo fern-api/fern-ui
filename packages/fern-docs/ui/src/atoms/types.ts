@@ -23,6 +23,8 @@ export interface NavigationProps {
   tabs: SidebarTab[];
   currentVersionId: FernNavigation.VersionId | undefined;
   versions: VersionSwitcherInfo[];
+  currentProductId: FernNavigation.ProductId | undefined;
+  products: FernNavigation.ProductNode[];
   sidebar: FernNavigation.SidebarRootNode | undefined;
   trailingSlash: boolean;
 }
