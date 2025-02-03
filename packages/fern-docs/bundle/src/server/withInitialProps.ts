@@ -1,3 +1,11 @@
+import {
+  type DocsPage,
+  type NavbarLink,
+  getGitHubInfo,
+  getGitHubRepo,
+  renderThemeStylesheet,
+} from "@/client";
+import { serializeMdx } from "@/client/mdx/bundlers/mdx-bundler";
 import * as FernNavigation from "@fern-api/fdr-sdk/navigation";
 import { withDefaultProtocol } from "@fern-api/ui-core-utils";
 import visitDiscriminatedUnion from "@fern-api/ui-core-utils/visitDiscriminatedUnion";
@@ -9,30 +17,21 @@ import {
 } from "@fern-docs/edge-config";
 import { withSeo } from "@fern-docs/seo";
 import {
-  type DocsPage,
-  type ImageData,
-  type NavbarLink,
-  getApiRouteSupplier,
-  getGitHubInfo,
-  getGitHubRepo,
-  renderThemeStylesheet,
-  withCustomJavascript,
-  withLogo,
-} from "@fern-docs/ui";
-import { serializeMdx } from "@fern-docs/ui/bundlers/mdx-bundler";
-import {
   addLeadingSlash,
+  getApiRouteSupplier,
   getRedirectForPath,
   isTrailingSlashEnabled,
+  withCustomJavascript,
+  withLogo,
 } from "@fern-docs/utils";
 import { SidebarTab } from "@fern-platform/fdr-utils";
 import { GetServerSidePropsResult, Redirect } from "next";
 import { ComponentProps } from "react";
-import { UnreachableCaseError } from "ts-essentials";
 import urlJoin from "url-join";
 import { DocsLoader } from "./DocsLoader";
 import { getAuthState } from "./auth/getAuthState";
 import { getReturnToQueryParam } from "./auth/return-to";
+import { createFileResolver } from "./file-resolver";
 import { handleLoadDocsError } from "./handleLoadDocsError";
 import { withLaunchDarkly } from "./ld-adapter";
 import type { LoadWithUrlResponse } from "./loadWithUrl";
@@ -84,7 +83,7 @@ export async function withInitialProps({
     docs.definition.config.redirects
   );
   if (redirect != null) {
-    return redirect;
+    return { redirect };
   }
 
   // load from edge config
@@ -299,33 +298,7 @@ export async function withInitialProps({
       pruneNavigationPredicate(tab, pruneOpts) || tab === found.currentTab
   );
 
-  function resolveFileSrc(src: string | undefined): ImageData | undefined {
-    if (src == null) {
-      return undefined;
-    }
-
-    const fileId = FernNavigation.FileId(
-      src.startsWith("file:") ? src.slice(5) : src
-    );
-    const file = docs.definition.filesV2[fileId];
-    if (file == null) {
-      // the file is not found, so we return the src as the image data
-      return { src };
-    }
-
-    if (file.type === "image") {
-      return {
-        src: file.url,
-        width: file.width,
-        height: file.height,
-        blurDataURL: file.blurDataUrl,
-      };
-    } else if (file.type === "url") {
-      return { src: file.url };
-    } else {
-      throw new UnreachableCaseError(file);
-    }
-  }
+  const resolveFileSrc = createFileResolver(docs.definition.filesV2);
 
   const content = await withResolvedDocsContent({
     domain: docs.baseUrl.domain,

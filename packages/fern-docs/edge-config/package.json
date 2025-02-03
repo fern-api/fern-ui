@@ -37,12 +37,12 @@
     "@fern-docs/utils": "workspace:*",
     "@vercel/edge-config": "^1.1.0",
     "url-join": "5.0.0",
-    "zod": "^3.23.8"
+    "zod": "^3"
   },
   "devDependencies": {
     "@fern-docs/search-utils": "workspace:*",
     "@fern-platform/configs": "workspace:*",
-    "@types/node": "^18.7.18",
+    "@types/node": "^18.19.74",
     "depcheck": "^1.4.7",
     "eslint": "^9",
     "prettier": "^3.4.2",

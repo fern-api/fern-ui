@@ -38,11 +38,11 @@
     "@fern-docs/utils": "workspace:*",
     "@vercel/kv": "^2.0.0",
     "httpsnippet-lite": "^3.0.5",
-    "ts-essentials": "^10.0.1"
+    "ts-essentials": "^10"
   },
   "devDependencies": {
     "@fern-platform/configs": "workspace:*",
-    "@types/node": "^18.7.18",
+    "@types/node": "^18.19.74",
     "depcheck": "^1.4.7",
     "eslint": "^9",
     "prettier": "^3.4.2",

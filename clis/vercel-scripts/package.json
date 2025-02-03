@@ -16,11 +16,11 @@
     "@fern-fern/fern-docs-sdk": "0.0.5",
     "@fern-fern/vercel": "0.0.4655",
     "execa": "^9.5.1",
-    "ts-essentials": "^10.0.1"
+    "ts-essentials": "^10"
   },
   "devDependencies": {
     "@fern-platform/configs": "workspace:*",
-    "@types/node": "^18.7.18",
+    "@types/node": "^18.19.74",
     "@types/yargs": "^17.0.32",
     "depcheck": "^1.4.7",
     "eslint": "^9",

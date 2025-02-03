@@ -32,13 +32,13 @@
     "chalk": "^5.3.0",
     "execa": "^9.5.1",
     "js-yaml": "^4.1.0",
-    "ts-essentials": "^10.0.1",
+    "ts-essentials": "^10",
     "yargs": "^17.4.1"
   },
   "devDependencies": {
     "@fern-platform/configs": "workspace:*",
     "@types/js-yaml": "^4.0.5",
-    "@types/node": "^18.7.18",
+    "@types/node": "^18.19.74",
     "@types/yargs": "^17.0.32",
     "depcheck": "^1.4.7",
     "eslint": "^9",
