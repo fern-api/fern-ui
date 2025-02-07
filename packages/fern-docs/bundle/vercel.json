@@ -4,7 +4,6 @@
   "buildCommand": "pnpm turbo docs:build",
   "devCommand": "pnpm turbo docs:dev",
   "git": {
-    "deploymentEnabled": false
-  },
-  "ignoreCommand": "exit 0"
+    "deploymentEnabled": true
+  }
 }

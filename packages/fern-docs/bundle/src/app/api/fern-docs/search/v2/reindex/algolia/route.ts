@@ -4,7 +4,7 @@ import {
   algoliaAppId,
   algoliaWriteApiKey,
   fdrEnvironment,
-  fernToken,
+  fernToken_admin,
 } from "@/server/env-variables";
 import { Gate, withBasicTokenAnonymous } from "@/server/withRbac";
 import { getDocsDomainEdge } from "@/server/xfernhost/edge";
@@ -56,7 +56,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       writeApiKey: algoliaWriteApiKey(),
       indexName: SEARCH_INDEX,
       environment: fdrEnvironment(),
-      fernToken: fernToken(),
+      fernToken: fernToken_admin(),
       domain: withoutStaging(domain),
       authed: (node) => {
         if (authEdgeConfig == null) {

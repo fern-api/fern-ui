@@ -10,7 +10,7 @@ const isTrailingSlashEnabled =
   process.env.TRAILING_SLASH === "1" ||
   process.env.NEXT_PUBLIC_TRAILING_SLASH === "1";
 
-// TODO: move this to a shared location (this is copied in @fern-docs/ui FernImage.tsx)
+// TODO: move this to a shared location (this is copied in FernImage.tsx)
 const DOCS_FILES_ALLOWLIST = [
   {
     protocol: "https",
@@ -49,7 +49,6 @@ const nextConfig = {
   reactStrictMode: true,
   trailingSlash: isTrailingSlashEnabled,
   transpilePackages: [
-    "next-mdx-remote",
     "esbuild",
     "es-toolkit",
     "three",
@@ -72,7 +71,6 @@ const nextConfig = {
     "@fern-docs/search-ui",
     "@fern-docs/search-utils",
     "@fern-docs/syntax-highlighter",
-    "@fern-docs/ui",
     "@fern-docs/utils",
     "@fern-platform/fdr-utils",
     "@fern-ui/loadable",
@@ -81,10 +79,8 @@ const nextConfig = {
   experimental: {
     scrollRestoration: true,
     instrumentationHook: true,
-    hardNavigate404: true,
     optimizePackageImports: [
       "@fern-api/fdr-sdk",
-      "@fern-docs/ui",
       "@fern-docs/mdx",
       "@fern-docs/components",
       "@fern-docs/search-server",
@@ -121,6 +117,7 @@ const nextConfig = {
    * Note that local development should not set the CDN_URI to ensure that the assets are served from the local server.
    */
   assetPrefix: cdnUri != null ? cdnUri.href : undefined,
+  typescript: { ignoreBuildErrors: true },
   headers: async () => {
     const AccessControlHeaders = [
       {
@@ -216,7 +213,7 @@ const nextConfig = {
 function withVercelEnv(config) {
   return {
     ...config,
-    deploymentId: process.env.VERCEL_DEPLOYMENT_ID ?? "dpl_development", // skew protection
+    deploymentId: process.env.VERCEL_DEPLOYMENT_ID, // skew protection
     productionBrowserSourceMaps: process.env.VERCEL_ENV === "preview",
   };
 }

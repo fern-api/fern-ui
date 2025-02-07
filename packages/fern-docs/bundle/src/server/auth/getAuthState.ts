@@ -6,10 +6,12 @@ import {
   getPreviewUrlAuthConfig,
 } from "@fern-docs/edge-config";
 import { removeTrailingSlash, withoutStaging } from "@fern-docs/utils";
+import { AsyncOrSync } from "ts-essentials";
 import urlJoin from "url-join";
 import { safeVerifyFernJWTConfig } from "./FernJWT";
 import { getAllowedRedirectUrls } from "./allowed-redirects";
 import { getOrgMetadataForDomain } from "./metadata-for-url";
+import { getOrigin } from "./origin";
 import { getOryAuthorizationUrl } from "./ory";
 import { getReturnToQueryParam } from "./return-to";
 import { getWebflowAuthorizationUrl } from "./webflow";
@@ -18,16 +20,11 @@ import { handleWorkosAuth } from "./workos-handler";
 
 export type AuthPartner = "workos" | "ory" | "webflow" | "custom";
 
-interface DomainAndHost {
+export interface DomainAndHost {
   /**
    * x-fern-host (NOT the host of the request)
    */
   domain: string;
-
-  /**
-   * The host of the request
-   */
-  host: string;
 
   /**
    * allowed destinations for redirects
@@ -78,42 +75,36 @@ export type AuthState = NotLoggedIn | IsLoggedIn;
  * @internal visible for testing
  */
 export async function getAuthStateInternal({
-  host,
   fernToken,
-  pathname,
   authConfig,
   previewAuthConfig,
   setFernToken,
 }: {
-  host: string;
   fernToken: string | undefined;
-  pathname?: string;
   authConfig?: AuthEdgeConfig;
   previewAuthConfig?: PreviewUrlAuth;
   setFernToken?: (token: string) => void;
-}): Promise<AuthState> {
+}): Promise<(pathname?: string) => AsyncOrSync<AuthState>> {
   // if the auth type is neither sso nor basic_token_verification, allow the request to pass through
   if (!authConfig) {
     if (previewAuthConfig != null) {
       if (previewAuthConfig.type === "workos") {
-        return handleWorkosAuth({
-          fernToken,
-          organization: previewAuthConfig.org,
-          host,
-          pathname,
-          setFernToken,
-        });
+        return (pathname) =>
+          handleWorkosAuth({
+            fernToken,
+            organization: previewAuthConfig.org,
+            pathname,
+            setFernToken,
+          });
       }
     }
-    return {
+    return () => ({
       authed: false,
       ok: true,
       authorizationUrl: undefined,
       partner: undefined,
-    };
+    });
   }
-
-  const authorizationUrl = getAuthorizationUrl(authConfig, host, pathname);
 
   // check if the request is allowed to pass through without authentication
   if (
@@ -124,35 +115,40 @@ export async function getAuthStateInternal({
     const partner =
       authConfig.type === "oauth2" ? authConfig.partner : "custom";
     if (user) {
-      return { authed: true, ok: true, user, partner };
+      return () => ({ authed: true, ok: true, user, partner });
     } else {
-      return { authed: false, ok: true, authorizationUrl, partner };
+      return (pathname) => ({
+        authed: false,
+        ok: true,
+        authorizationUrl: getAuthorizationUrl(authConfig, pathname),
+        partner,
+      });
     }
   }
 
   // check if the user is logged in via WorkOS
   if (authConfig.type === "sso" && authConfig.partner === "workos") {
-    return handleWorkosAuth({
-      fernToken,
-      organization: authConfig.organization,
-      host,
-      pathname,
-      setFernToken,
-      authorizationUrl: {
-        connection: authConfig.connection,
-        provider: authConfig.provider,
-        domainHint: authConfig.domainHint,
-        loginHint: authConfig.loginHint,
-      },
-    });
+    return (pathname) =>
+      handleWorkosAuth({
+        fernToken,
+        organization: authConfig.organization,
+        pathname,
+        setFernToken,
+        authorizationUrl: {
+          connection: authConfig.connection,
+          provider: authConfig.provider,
+          domainHint: authConfig.domainHint,
+          loginHint: authConfig.loginHint,
+        },
+      });
   }
 
-  return {
+  return () => ({
     authed: false,
     ok: false,
     authorizationUrl: undefined,
     partner: undefined,
-  };
+  });
 }
 
 /**
@@ -164,14 +160,16 @@ export async function getAuthStateInternal({
  * @param request - the request to check the headers / cookies
  * @param next - the function to call if the user is logged in and the session is valid for the current pathname
  */
-export async function getAuthState(
+export async function createGetAuthState(
   domain: string,
-  host: string,
   fernToken: string | undefined,
-  pathname?: string,
   authConfig?: AuthEdgeConfig,
   setFernToken?: (token: string) => void
-): Promise<AuthState & DomainAndHost> {
+): Promise<
+  DomainAndHost & {
+    getAuthState: (pathname?: string) => AsyncOrSync<AuthState>;
+  }
+> {
   authConfig ??= await getAuthEdgeConfig(domain);
   const orgMetadata = await getOrgMetadataForDomain(withoutStaging(domain));
   const previewAuthConfig =
@@ -179,10 +177,8 @@ export async function getAuthState(
       ? await getPreviewUrlAuthConfig(orgMetadata)
       : undefined;
 
-  const authState = await getAuthStateInternal({
-    host,
+  const getAuthState = await getAuthStateInternal({
     fernToken,
-    pathname,
     authConfig,
     setFernToken,
     previewAuthConfig,
@@ -194,22 +190,21 @@ export async function getAuthState(
   );
 
   return {
-    ...authState,
     domain,
-    host,
     allowedDestinations,
+    getAuthState,
   };
 }
 
 function getAuthorizationUrl(
   authConfig: AuthEdgeConfig,
-  host: string,
   pathname?: string
 ): string | undefined {
+  const origin = getOrigin();
   // TODO: this is currently not a correct implementation of the state parameter b/c it should be signed w/ the jwt secret
   // however, we should not break existing customers who are consuming the state as a `return_to` param in their auth flows.
   const state = urlJoin(
-    removeTrailingSlash(withDefaultProtocol(host)),
+    removeTrailingSlash(withDefaultProtocol(origin)),
     pathname ?? ""
   );
 
@@ -219,7 +214,7 @@ function getAuthorizationUrl(
     // note: `redirect` is allowed to override the default redirect uri, and the `return_to` param
     if (!destination.searchParams.has("redirect_uri")) {
       const redirectUri = urlJoin(
-        removeTrailingSlash(withDefaultProtocol(host)),
+        removeTrailingSlash(origin),
         "/api/fern-docs/auth/jwt/callback"
       );
 
@@ -231,7 +226,7 @@ function getAuthorizationUrl(
     return destination.toString();
   } else if (authConfig.type === "sso" && authConfig.partner === "workos") {
     const redirectUri = urlJoin(
-      removeTrailingSlash(withDefaultProtocol(host)),
+      removeTrailingSlash(origin),
       "/api/fern-docs/auth/sso/callback"
     );
     return getWorkosSSOAuthorizationUrl({
@@ -248,7 +243,7 @@ function getAuthorizationUrl(
       return getWebflowAuthorizationUrl(authConfig, {
         state,
         redirectUri: urlJoin(
-          removeTrailingSlash(withDefaultProtocol(host)),
+          removeTrailingSlash(origin),
           "/api/fern-docs/oauth/webflow/callback"
         ),
       });
@@ -256,7 +251,7 @@ function getAuthorizationUrl(
       return getOryAuthorizationUrl(authConfig, {
         state,
         redirectUri: urlJoin(
-          removeTrailingSlash(withDefaultProtocol(host)),
+          removeTrailingSlash(origin),
           "/api/fern-docs/oauth/ory/callback"
         ),
       });

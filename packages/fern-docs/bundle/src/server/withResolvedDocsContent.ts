@@ -1,13 +1,11 @@
+import { serializeMdx } from "@/components/mdx/bundlers/mdx-bundler";
+import type { DocsContent } from "@/components/resolver/DocsContent";
+import { resolveDocsContent } from "@/components/resolver/resolveDocsContent";
+import type { FileData } from "@/server/types";
 import { DocsV1Read } from "@fern-api/fdr-sdk";
 import type * as FernDocs from "@fern-api/fdr-sdk/docs";
 import * as FernNavigation from "@fern-api/fdr-sdk/navigation";
 import { getFrontmatter } from "@fern-docs/mdx";
-import {
-  resolveDocsContent,
-  type DocsContent,
-  type ImageData,
-} from "@fern-docs/ui";
-import { getMdxBundler } from "@fern-docs/ui/bundlers";
 import { EdgeFlags } from "@fern-docs/utils";
 import { AuthState } from "./auth/getAuthState";
 import { withPrunedNavigation } from "./withPrunedNavigation";
@@ -19,7 +17,7 @@ interface WithResolvedDocsContentOpts {
   definition: DocsV1Read.DocsDefinition;
   edgeFlags: EdgeFlags;
   scope?: Record<string, unknown>;
-  replaceSrc?: (src: string) => ImageData | undefined;
+  replaceSrc?: (src: string) => FileData | undefined;
 }
 
 export async function withResolvedDocsContent({
@@ -45,9 +43,6 @@ export async function withResolvedDocsContent({
     visibleNodeIds: [found.node.id],
     authed: authState.authed,
   });
-
-  const engine = edgeFlags.useMdxBundler ? "mdx-bundler" : "next-mdx-remote";
-  const serializeMdx = await getMdxBundler(engine);
 
   return resolveDocsContent({
     node,
@@ -84,7 +79,7 @@ export async function withResolvedDocsContent({
     },
     serializeMdx,
     domain,
-    engine,
+    engine: "mdx-bundler",
   });
 }
 
